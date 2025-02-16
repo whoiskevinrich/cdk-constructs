@@ -42,7 +42,7 @@ export interface PermissionSetProps {
 
   readonly instanceArn: string;
 
-  readonly managedPolicies?: iam.IManagedPolicy[];
+  readonly awsManagedPolicyArns?: string[];
 
   readonly permissionsBoundary?: core.PermissionsBoundary;
 
@@ -62,6 +62,7 @@ export class PermissionSet extends core.Resource implements IPermissionSet {
   public readonly name: string;
 
   public readonly customerManagedPolicies: CustomerManagedPolicyReference[];
+  public readonly awsManagedPolicyArns?: string[];
 
   constructor(scope: Construct, id: string, props: PermissionSetProps) {
     super(scope, id);
@@ -76,9 +77,13 @@ export class PermissionSet extends core.Resource implements IPermissionSet {
       customerManagedPolicyReferences: this.mapCustomerManagedPolicyReferences(
         props.customerManagedPolicies
       ),
+      managedPolicies: props.awsManagedPolicyArns,
     });
 
     this.node.addValidation(new PermissionSetValidator(this));
+
+    this.permissionSetArn = this.permissionSet.instanceArn;
+    this.awsManagedPolicyArns = this.permissionSet.managedPolicies;
   }
 
   private mapCustomerManagedPolicyReferences(

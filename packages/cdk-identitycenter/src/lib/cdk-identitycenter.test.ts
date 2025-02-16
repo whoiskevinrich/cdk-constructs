@@ -1,4 +1,5 @@
 import * as cdk from 'aws-cdk-lib';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import { Match, Template } from 'aws-cdk-lib/assertions';
 import * as ic from '../index';
 
@@ -120,9 +121,20 @@ describe('PermissionSet', () => {
     });
   });
 
-  describe('Managed Policies', () => {
+  describe('AWS Managed Policies', () => {
     it.skip('should allow up to 20 policies', () => {
-      throw new Error('Not implemented');
+      let count = 0;
+      const managedPolicies = new Array(21).fill(`arn:aws:iam::aws:policy/MyPolicy-${count++}`);
+
+      new ic.PermissionSet(stack, 'MyPermissionSet', {
+        name: 'MyPermissionSet',
+        instanceArn,
+        awsManagedPolicyArns: managedPolicies,
+      });
+
+      const validationErrors = stack.node.validate();
+      expect(validationErrors).toContain('Cannot have more than 20 AWS managed policies');
+
     });
     it.skip('should throw when more than 20 policies are provided', () => {
       throw new Error('Not implemented');
