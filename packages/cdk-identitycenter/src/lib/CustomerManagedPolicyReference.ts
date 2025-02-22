@@ -10,7 +10,10 @@ export class CustomerManagedPolicyReference implements core.IResolvable {
     this.creationStack = core.captureStackTrace();
   }
 
-  public resolve(context: core.IResolveContext): any {
-    //github.com/aws/aws-cdk/blob/main/packages/aws-cdk-lib/aws-iam/lib/policy-document.ts#L77
+  public resolve(_context: core.IResolveContext) {
+    return {
+      Name: this.name,
+      Path: this.path,
+    };
   }
 }
