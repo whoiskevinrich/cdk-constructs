@@ -63,23 +63,6 @@ export class PermissionSet extends core.Resource implements IPermissionSet {
   public readonly customerManagedPolicies: CustomerManagedPolicyReference[];
   public readonly awsManagedPolicyArns?: string[];
 
-  public addCustomerManagedPolicy(
-    policy: CustomerManagedPolicyReference | CustomerManagedPolicyReference[]
-  ) {
-    const policies =
-      this.cfnPermissionSet.customerManagedPolicyReferences ||
-      new Array<sso.CfnPermissionSet.CustomerManagedPolicyReferenceProperty>();
-
-    if (Array.isArray(policy)) {
-      this.cfnPermissionSet.customerManagedPolicyReferences.push(
-        this.mapCustomerManagedPolicyReferences(policy)
-      );
-      this.customerManagedPolicies.push(...policy);
-    } else {
-      this.customerManagedPolicies.push(policy);
-    }
-  }
-
   constructor(scope: Construct, id: string, props: PermissionSetProps) {
     super(scope, id);
 
