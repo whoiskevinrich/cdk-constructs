@@ -1,8 +1,5 @@
 import * as core from 'aws-cdk-lib/core';
 
-// https://github.com/aws/aws-cdk/blob/main/packages/aws-cdk-lib/aws-iam/lib/user.ts
-// https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-sso-permissionset.html
-
 export class CustomerManagedPolicyReference implements core.IResolvable {
   public readonly creationStack: string[];
 
@@ -10,6 +7,8 @@ export class CustomerManagedPolicyReference implements core.IResolvable {
     this.creationStack = core.captureStackTrace();
   }
 
+  // we don't plan to use the context here, so we can ignore it
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public resolve(_context: core.IResolveContext) {
     return {
       Name: this.name,

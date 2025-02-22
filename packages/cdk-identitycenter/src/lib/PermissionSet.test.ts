@@ -29,6 +29,21 @@ describe('PermissionSet', () => {
     });
   });
 
+  describe('Name', () => {
+    it('should use the provided name', () => {
+      new ic.PermissionSet(stack, 'NamedPermissionSet', {
+        ...baseProps,
+        name: 'TestPermissionSet',
+      });
+
+      const template = Template.fromStack(stack);
+
+      template.hasResourceProperties('AWS::SSO::PermissionSet', {
+        Name: 'TestPermissionSet',
+      });
+    });
+  });
+
   describe('Customer Managed Policies', () => {
     it('should be idempotent when the same policy is added twice', () => {
       const managedPolicyRefs = [
@@ -61,46 +76,33 @@ describe('PermissionSet', () => {
     });
   });
 
-  describe('Inline Policy', () => {
-    it.skip('should', () => {
-      throw new Error('Not implemented');
-    });
-  });
-
   describe('AWS Managed Policies', () => {
-    it.skip('should allow up to 20 policies', () => {
-      let count = 0;
-      const managedPolicies = new Array(21).fill(
-        `arn:aws:iam::aws:policy/MyPolicy-${count++}`
-      );
+    it('should be idempotent when the same policy is added twice', () => {
+      const managedPolicies = [
+        'arn:aws:iam::aws:policy/MyPolicy',
+        'arn:aws:iam::aws:policy/MyPolicy',
+      ];
 
       new ic.PermissionSet(stack, 'MyPermissionSet', {
         ...baseProps,
         awsManagedPolicyArns: managedPolicies,
       });
 
-      const validationErrors = stack.node.validate();
-      expect(validationErrors).toContain(
-        'Cannot have more than 20 AWS managed policies'
-      );
-    });
-    it.skip('should throw when more than 20 policies are provided', () => {
-      throw new Error('Not implemented');
-    });
-  });
-
-  describe('Name', () => {
-    it('should use the provided name', () => {
-      new ic.PermissionSet(stack, 'NamedPermissionSet', {
-        ...baseProps,
-        name: 'TestPermissionSet',
-      });
-
       const template = Template.fromStack(stack);
 
       template.hasResourceProperties('AWS::SSO::PermissionSet', {
-        Name: 'TestPermissionSet',
+        Name: 'MyPermissionSet',
+        ManagedPolicies: Match.arrayEquals([
+          // fails with more than one element
+          'arn:aws:iam::aws:policy/MyPolicy',
+        ]),
       });
+    });
+  });
+
+  describe('Inline Policy', () => {
+    it.skip('should', () => {
+      throw new Error('Not implemented');
     });
   });
 
