@@ -1,10 +1,9 @@
-import * as iam from 'aws-cdk-lib/aws-iam';
 import * as sso from 'aws-cdk-lib/aws-sso';
 import * as core from 'aws-cdk-lib/core';
 import { Construct } from 'constructs';
 import { CustomerManagedPolicyReference } from 'src/lib/CustomerManagedPolicyReference';
 import { InlinePolicy } from './InlinePolicy';
-import { PermissionSetValidator } from './Validator';
+import { PermissionSetValidator } from './PermissionSetValidator';
 
 export interface IPermissionSet extends core.IResource {
   /**

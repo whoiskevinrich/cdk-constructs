@@ -6,4 +6,4 @@ export {
   PermissionSet,
   PermissionSetProps,
 } from './lib/PermissionSet';
-export { PermissionSetValidator } from './lib/Validator';
+export { PermissionSetValidator } from './lib/PermissionSetValidator';
