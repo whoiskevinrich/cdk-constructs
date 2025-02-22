@@ -11,6 +11,7 @@
     "src/**/*.spec.ts",
     "src/**/*.d.ts"
   ],
+  "exclude": ["src/lib/internal/*"],
   "references": [
     {
       "path": "./tsconfig.lib.json"

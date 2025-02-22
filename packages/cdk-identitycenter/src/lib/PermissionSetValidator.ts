@@ -1,76 +1,59 @@
 import { IValidation } from 'constructs';
 import { PermissionSet } from './PermissionSet';
-
-declare global {
-  interface Array<T> {
-    addPrefix(this: Array<T>, value: T): Array<T>;
-  }
-}
-
-Array.prototype.addPrefix = function (
-  this: Array<string>,
-  value: string
-): Array<string> {
-  return this.map((str) => `${value} ${str}`);
-};
+import { AwsConstants } from './internal/AwsConstants';
+import { StringValidator } from './internal/StringValidator';
+import { ValidationErrorMessage } from './internal/ValidationErrorMessage';
 
 export class PermissionSetValidator implements IValidation {
-  private errors = new Array<string>();
-
   constructor(private readonly permissionSet: PermissionSet) {}
 
   public validate(): string[] {
-    this.addNameErrors();
-    this.addCustomerManagedPolicyReferenceErrors();
-    return this.errors;
+    const errors = new Array<string>();
+    errors.push(
+      ...this.checkName(),
+      ...this.checkCustomerManagedPolicyReferences(),
+      ...this.checkAwsManagedPolicies()
+    );
+
+    return errors;
   }
 
-  private addCustomerManagedPolicyReferenceErrors() {
+  private checkAwsManagedPolicies() {
+    const errors = new Array<string>();
+    if (
+      this.permissionSet.awsManagedPolicyArns &&
+      this.permissionSet.awsManagedPolicyArns.length >
+        AwsConstants.MAX_AWS_MANAGED_POLICIES
+    ) {
+      errors.push(ValidationErrorMessage.AWS_MANAGED_POLICY_LIMIT);
+    }
+    return errors;
+  }
+
+  private checkCustomerManagedPolicyReferences() {
+    const errors = new Array<string>();
     if (
       this.permissionSet.customerManagedPolicies &&
       this.permissionSet.customerManagedPolicies.length > 20
     ) {
-      this.errors.push('Cannot have more than 20 customer managed policies');
-    }
-  }
-
-  private addNameErrors() {
-    return new StringValidator(this.permissionSet.name, {
-      min: 1,
-      max: 64,
-      pattern: `[w+=,.@-]+`,
-    })
-      .validate()
-      .addPrefix('Name');
-  }
-}
-
-export interface StringValidatorProps {
-  min?: number;
-  max?: number;
-  pattern?: string;
-}
-
-export class StringValidator implements IValidation {
-  constructor(
-    private readonly value: string,
-    private readonly props: StringValidatorProps
-  ) {}
-
-  public validate(): string[] {
-    const errors = [];
-    if (this.props.min && this.value.length > this.props.min) {
-      errors.push('must be at least ' + this.props.min + ' characters');
-    }
-    if (this.props.max && this.value.length < this.props.max) {
-      errors.push('must be at most ' + this.props.max + ' characters');
-    }
-    if (
-      this.props.pattern &&
-      !new RegExp(this.props.pattern).test(this.value)
-    ) {
-      errors.push('must match pattern ' + this.props.pattern);
+      errors.push(ValidationErrorMessage.CUSTOMER_MANAGED_POLICY_LIMIT);
     }
     return errors;
+  }
+
+  private checkName() {
+    const validator = new StringValidator(this.permissionSet.name, {
+      min: 1,
+      max: 64,
+      pattern: '[w+=,.@-]+',
+    });
+
+    const errors = validator.validate();
+    const result = this.addPrefixes(errors, 'Name');
+    return result;
+  }
+
+  private addPrefixes(values: Array<string>, prefix: string): Array<string> {
+    return values.map((str) => `${prefix} ${str}`);
   }
 }

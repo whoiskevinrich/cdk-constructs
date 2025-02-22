@@ -53,7 +53,7 @@ export interface PermissionSetProps {
 }
 
 export class PermissionSet extends core.Resource implements IPermissionSet {
-  public readonly permissionSet: sso.CfnPermissionSet;
+  public readonly cfnPermissionSet: sso.CfnPermissionSet;
 
   public readonly permissionSetArn: string;
   public readonly permissionSetId: string;
@@ -63,6 +63,23 @@ export class PermissionSet extends core.Resource implements IPermissionSet {
   public readonly customerManagedPolicies: CustomerManagedPolicyReference[];
   public readonly awsManagedPolicyArns?: string[];
 
+  public addCustomerManagedPolicy(
+    policy: CustomerManagedPolicyReference | CustomerManagedPolicyReference[]
+  ) {
+    const policies =
+      this.cfnPermissionSet.customerManagedPolicyReferences ||
+      new Array<sso.CfnPermissionSet.CustomerManagedPolicyReferenceProperty>();
+
+    if (Array.isArray(policy)) {
+      this.cfnPermissionSet.customerManagedPolicyReferences.push(
+        this.mapCustomerManagedPolicyReferences(policy)
+      );
+      this.customerManagedPolicies.push(...policy);
+    } else {
+      this.customerManagedPolicies.push(policy);
+    }
+  }
+
   constructor(scope: Construct, id: string, props: PermissionSetProps) {
     super(scope, id);
 
@@ -70,7 +87,7 @@ export class PermissionSet extends core.Resource implements IPermissionSet {
     this.customerManagedPolicies = props.customerManagedPolicies || [];
 
     // https://github.com/aws/aws-cdk/blob/main/packages/aws-cdk-lib/aws-iam/lib/user.ts#L268
-    this.permissionSet = new sso.CfnPermissionSet(this, 'Resource', {
+    this.cfnPermissionSet = new sso.CfnPermissionSet(this, 'Resource', {
       name: this.name,
       instanceArn: props.instanceArn,
       customerManagedPolicyReferences: this.mapCustomerManagedPolicyReferences(
@@ -81,8 +98,8 @@ export class PermissionSet extends core.Resource implements IPermissionSet {
 
     this.node.addValidation(new PermissionSetValidator(this));
 
-    this.permissionSetArn = this.permissionSet.instanceArn;
-    this.awsManagedPolicyArns = this.permissionSet.managedPolicies;
+    this.permissionSetArn = this.cfnPermissionSet.instanceArn;
+    this.awsManagedPolicyArns = this.cfnPermissionSet.managedPolicies;
   }
 
   private mapCustomerManagedPolicyReferences(

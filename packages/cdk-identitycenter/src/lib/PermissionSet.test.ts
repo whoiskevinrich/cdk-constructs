@@ -1,12 +1,14 @@
 import * as cdk from 'aws-cdk-lib';
-import * as iam from 'aws-cdk-lib/aws-iam';
 import { Match, Template } from 'aws-cdk-lib/assertions';
 import * as ic from '../index';
 
 // https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-sso-permissionset.html
 
 describe('PermissionSet', () => {
-  const instanceArn = 'arn:aws:sso:::instance/ssoins-1234567890abcdef0';
+  const baseProps = {
+    instanceArn: 'arn:aws:sso:::instance/ssoins-1234567890abcdef0',
+    name: 'MyPermissionSet',
+  };
 
   let stack: cdk.Stack;
 
@@ -16,69 +18,18 @@ describe('PermissionSet', () => {
 
   it('should use provided instance ARN', () => {
     new ic.PermissionSet(stack, 'MyPermissionSet', {
-      name: 'MyPermissionSet',
-      instanceArn,
+      ...baseProps,
+      instanceArn: 'abc',
     });
 
     const template = Template.fromStack(stack);
 
     template.hasResourceProperties('AWS::SSO::PermissionSet', {
-      InstanceArn: instanceArn,
+      InstanceArn: 'abc',
     });
   });
 
   describe('Customer Managed Policies', () => {
-    it('should accept an array of Customer Managed Policies', () => {
-      const managedPolicyRefs = [
-        new ic.CustomerManagedPolicyReference(
-          'MyManagedPolicy',
-          '/path/to/policy'
-        ),
-        new ic.CustomerManagedPolicyReference(
-          'MyOtherManagedPolicy',
-          '/path/to/other/policy'
-        ),
-      ];
-
-      new ic.PermissionSet(stack, 'MyPermissionSet', {
-        name: 'MyPermissionSet',
-        instanceArn,
-        customerManagedPolicies: managedPolicyRefs,
-      });
-
-      const template = Template.fromStack(stack);
-
-      template.hasResourceProperties('AWS::SSO::PermissionSet', {
-        Name: 'MyPermissionSet',
-        CustomerManagedPolicyReferences: Match.arrayWith([
-          Match.objectLike({
-            Name: 'MyManagedPolicy',
-            Path: '/path/to/policy',
-          }),
-        ]),
-      });
-    });
-
-    it('should be invalid when more than 20 policies are provided', () => {
-      const managedPolicyRefs = new Array(21).fill(
-        new ic.CustomerManagedPolicyReference(
-          'MyManagedPolicy',
-          '/path/to/policy'
-        )
-      );
-
-      const permissionSet = new ic.PermissionSet(stack, 'MyPermissionSet', {
-        name: 'MyPermissionSet',
-        instanceArn,
-        customerManagedPolicies: managedPolicyRefs,
-      });
-
-      const validationErrors = permissionSet.node.validate();
-      expect(validationErrors).toContain(
-        'Cannot have more than 20 customer managed policies'
-      );
-    });
-
     it('should be idempotent when the same policy is added twice', () => {
       const managedPolicyRefs = [
         new ic.CustomerManagedPolicyReference(
@@ -92,8 +43,7 @@ describe('PermissionSet', () => {
       ];
 
       new ic.PermissionSet(stack, 'MyPermissionSet', {
-        name: 'MyPermissionSet',
-        instanceArn,
+        ...baseProps,
         customerManagedPolicies: managedPolicyRefs,
       });
 
@@ -109,10 +59,6 @@ describe('PermissionSet', () => {
         ]),
       });
     });
-
-    it.skip('should allow customer managed policies to be added using methods', () => {
-      throw new Error('Not implemented');
-    });
   });
 
   describe('Inline Policy', () => {
@@ -124,17 +70,19 @@ describe('PermissionSet', () => {
   describe('AWS Managed Policies', () => {
     it.skip('should allow up to 20 policies', () => {
       let count = 0;
-      const managedPolicies = new Array(21).fill(`arn:aws:iam::aws:policy/MyPolicy-${count++}`);
+      const managedPolicies = new Array(21).fill(
+        `arn:aws:iam::aws:policy/MyPolicy-${count++}`
+      );
 
       new ic.PermissionSet(stack, 'MyPermissionSet', {
-        name: 'MyPermissionSet',
-        instanceArn,
+        ...baseProps,
         awsManagedPolicyArns: managedPolicies,
       });
 
       const validationErrors = stack.node.validate();
-      expect(validationErrors).toContain('Cannot have more than 20 AWS managed policies');
-
+      expect(validationErrors).toContain(
+        'Cannot have more than 20 AWS managed policies'
+      );
     });
     it.skip('should throw when more than 20 policies are provided', () => {
       throw new Error('Not implemented');
@@ -144,7 +92,7 @@ describe('PermissionSet', () => {
   describe('Name', () => {
     it('should use the provided name', () => {
       new ic.PermissionSet(stack, 'NamedPermissionSet', {
-        instanceArn,
+        ...baseProps,
         name: 'TestPermissionSet',
       });
 

@@ -1,7 +1,10 @@
 import { Stack } from 'aws-cdk-lib/core';
 import { CustomerManagedPolicyReference } from './CustomerManagedPolicyReference';
+import { ValidationErrorMessage } from './internal/ValidationErrorMessage';
 import { PermissionSet, PermissionSetProps } from './PermissionSet';
 import { PermissionSetValidator } from './PermissionSetValidator';
+
+// https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-sso-permissionset.html
 
 describe('PermissionSetValidator', () => {
   const basePermissionSetProps: PermissionSetProps = {
@@ -16,9 +19,13 @@ describe('PermissionSetValidator', () => {
   });
 
   describe('Customer Managed Policies', () => {
-    it('should be invalid when more than 20 policies are provided', () => {
+    it('should return errors when more than 20 policies are provided', () => {
+      let i = 1;
       const managedPolicyRefs = new Array(21).fill(
-        new CustomerManagedPolicyReference('MyManagedPolicy', '/path/to/policy')
+        new CustomerManagedPolicyReference(
+          `MyManagedPolicy-${i++}`,
+          '/path/to/policy'
+        )
       );
 
       const permissionSet = new PermissionSet(stack, 'MyPermissionSet', {
@@ -30,7 +37,28 @@ describe('PermissionSetValidator', () => {
 
       const validationErrors = sut.validate();
       expect(validationErrors).toContain(
-        'Cannot have more than 20 customer managed policies'
+        ValidationErrorMessage.CUSTOMER_MANAGED_POLICY_LIMIT
+      );
+    });
+  });
+
+  describe('AWS Managed Policies', () => {
+    it('should return errors when more than 20 policies are provided', () => {
+      let i = 1;
+      const managedPolicyArns = new Array(21).fill(
+        `arn:aws:iam::aws:policy/MyManagedPolicy-${i++}`
+      );
+
+      const permissionSet = new PermissionSet(stack, 'MyPermissionSet', {
+        ...basePermissionSetProps,
+        awsManagedPolicyArns: managedPolicyArns,
+      });
+
+      const sut = new PermissionSetValidator(permissionSet);
+
+      const validationErrors = sut.validate();
+      expect(validationErrors).toContain(
+        ValidationErrorMessage.AWS_MANAGED_POLICY_LIMIT
       );
     });
   });
