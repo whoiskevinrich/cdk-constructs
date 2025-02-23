@@ -62,4 +62,24 @@ describe('PermissionSetValidator', () => {
       );
     });
   });
+
+  describe('Inline Policies', () => {
+    it('should return errors when the inline policy exceeds 32,768 characters', () => {
+      const inlinePolicy = JSON.stringify(
+        new Array(1000).fill('a'.repeat(32)).join('')
+      );
+
+      const permissionSet = new PermissionSet(stack, 'MyPermissionSet', {
+        ...basePermissionSetProps,
+        inlinePolicy: inlinePolicy,
+      });
+
+      const sut = new PermissionSetValidator(permissionSet);
+
+      const validationErrors = sut.validate();
+      expect(validationErrors).toContain(
+        ValidationErrorMessage.INLINE_POLICY_CHARACTER_LIMIT
+      );
+    });
+  });
 });
