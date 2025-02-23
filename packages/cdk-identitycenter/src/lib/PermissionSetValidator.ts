@@ -55,7 +55,7 @@ export class PermissionSetValidator implements IValidation {
       errors.push(ValidationErrorMessage.NAME_LENGTH_MAX);
     }
 
-    if (!this.permissionSet.name.match(PermissionSetConstants.NAME_REGEX)) {
+    if (this.permissionSet.name.match(PermissionSetConstants.NAME_REGEX)) {
       errors.push(ValidationErrorMessage.NAME_REGEX);
     }
 

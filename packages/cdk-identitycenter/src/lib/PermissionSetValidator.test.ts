@@ -37,7 +37,7 @@ describe('PermissionSetValidator', () => {
 
       const validationErrors = sut.validate();
       expect(validationErrors).toContain(
-        ValidationErrorMessage.CUSTOMER_MANAGED_POLICY_LIMIT
+        ValidationErrorMessage.CUSTOMER_MANAGED_POLICIES_COUNT_MAX
       );
     });
   });
@@ -58,7 +58,7 @@ describe('PermissionSetValidator', () => {
 
       const validationErrors = sut.validate();
       expect(validationErrors).toContain(
-        ValidationErrorMessage.AWS_MANAGED_POLICY_LIMIT
+        ValidationErrorMessage.AWS_MANAGED_POLICIES_COUNT_MAX
       );
     });
   });
@@ -78,7 +78,7 @@ describe('PermissionSetValidator', () => {
 
       const validationErrors = sut.validate();
       expect(validationErrors).toContain(
-        ValidationErrorMessage.INLINE_POLICY_CHARACTER_LIMIT
+        ValidationErrorMessage.INLINE_POLICY_LENGTH_MAX
       );
     });
   });
